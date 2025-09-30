@@ -14,6 +14,10 @@ load_dotenv()
 DATABASE_URI = os.environ.get("DATABASE_URI", "sqlite:///Chinook.db")
 DATABASE_TYPE = os.environ.get("DATABASE_TYPE", "SQLite")
 
+# Ensure DATABASE_TYPE is not empty
+if not DATABASE_TYPE or DATABASE_TYPE.strip() == "":
+    DATABASE_TYPE = "SQLite"
+
 # LLM configuration from environment variables
 LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini")
 LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "openai")
@@ -113,6 +117,10 @@ agent_executor = create_react_agent(
     prompt=system_message,
 )
 
+# Configure the agent with our recursion limit
+agent_executor = agent_executor.with_config({"recursion_limit": RECURSION_LIMIT})
+print(f"🔄 Agent recursion limit set to: {RECURSION_LIMIT}")
+
 
 def requires_modifications(user_input):
     """Detect if the request requires database modifications"""
@@ -211,6 +219,7 @@ def interactive_cli():
     print(f"📦 Batch mode: {'ON' if BATCH_MODE else 'OFF'}")
     print(f"🎯 Database: {DATABASE_TYPE}")
     print(f"🧠 LLM: {LLM_PROVIDER}/{LLM_MODEL}")
+    print(f"🔄 Recursion limit: {RECURSION_LIMIT}")
 
     # Conversation history
     conversation_history = []

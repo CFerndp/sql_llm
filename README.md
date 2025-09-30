@@ -162,6 +162,241 @@ DATABASE_URI=postgresql://localhost/test python testing_blade.py
 - Lower `TOP_K_RESULTS` for smaller result sets
 - Enable `DEBUG_MODE` to see what's happening
 
+## Makefile Manual
+
+This project includes a comprehensive Makefile that automates all development tasks. Here's a complete guide to all available commands:
+
+### Quick Reference
+
+```bash
+make help          # Show all available commands
+make setup         # Complete project setup
+make run           # Run the SQL agent
+make debug         # Debug with pdb
+```
+
+### Setup Commands
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `make setup` | Complete project setup (venv + dependencies + database) | First-time setup |
+| `make venv` | Create Python virtual environment | Manual venv creation |
+| `make install` | Install Python dependencies from requirements.txt | After adding new deps |
+| `make download-db` | Download and create Chinook SQLite database | Database setup |
+
+**Example Setup Workflow:**
+```bash
+# Clone the repository
+git clone <repository-url>
+cd testing_blade
+
+# Complete setup in one command
+make setup
+
+# Start using the agent
+make run
+```
+
+### Development Commands
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `make run` | Run the SQL agent with default settings | Daily development |
+| `make run-high-limit` | Run with higher recursion limit (100) | Complex operations |
+| `make debug` | Run agent in debug mode with Python debugger (pdb) | Troubleshooting |
+| `make freeze` | Update requirements.txt with current dependencies | After installing new packages |
+
+**Development Examples:**
+```bash
+# Normal usage
+make run
+
+# For complex batch operations that might hit recursion limits
+make run-high-limit
+
+# Debug a specific issue
+make debug
+# In pdb: use 'n' (next), 's' (step), 'c' (continue), 'l' (list), 'p <var>' (print)
+
+# After installing new packages
+pip install some-new-package
+make freeze
+```
+
+### Maintenance Commands
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `make clean` | Remove generated files (__pycache__, *.pyc, etc.) | Clean workspace |
+| `make clean-all` | Remove everything including virtual environment | Fresh start |
+| `make update` | Update all dependencies to latest versions | Dependency updates |
+| `make test` | Test database connection and show basic info | Verify setup |
+
+**Maintenance Examples:**
+```bash
+# Clean up generated files
+make clean
+
+# Complete reset (useful for troubleshooting)
+make clean-all
+make setup
+
+# Update dependencies
+make update
+```
+
+### Environment Management
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `make env-example` | Create .env file from .env.example template | Initial configuration |
+| `make check-env` | Validate environment configuration | Verify settings |
+
+**Environment Setup:**
+```bash
+# Create .env from template
+make env-example
+
+# Edit .env with your settings
+nano .env
+
+# Verify configuration
+make check-env
+```
+
+### Database Management
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `make db-info` | Show database statistics (tables, record counts) | Database overview |
+| `make db-reset` | Delete and re-download database | Reset to clean state |
+
+**Database Examples:**
+```bash
+# Check database status
+make db-info
+
+# Reset database to original state
+make db-reset
+```
+
+### Advanced Usage
+
+#### Custom Environment Variables
+```bash
+# Run with custom recursion limit
+RECURSION_LIMIT=150 make run
+
+# Run with debug mode enabled
+DEBUG_MODE=true make run
+
+# Use different database
+DATABASE_URI=postgresql://localhost/mydb make run
+```
+
+#### Development Shortcuts
+```bash
+# Quick development cycle
+make dev              # Equivalent to: make setup run
+
+# Complete restart
+make restart          # Equivalent to: make clean-all setup run
+
+# Quick run (skip checks)
+make quick-run        # Direct python execution
+```
+
+#### Troubleshooting Commands
+```bash
+# Test database connection
+make test
+
+# Check environment configuration
+make check-env
+
+# View database information
+make db-info
+
+# Reset everything
+make clean-all setup
+```
+
+### Makefile Features
+
+#### Smart Validation
+- Checks for required files before running
+- Validates database existence
+- Verifies environment configuration
+- Provides helpful error messages
+
+#### Colored Output
+- 🔴 Red: Errors and warnings
+- 🟢 Green: Success messages
+- 🟡 Yellow: In-progress operations
+- 🔵 Blue: Information messages
+
+#### Error Recovery
+- Automatically creates requirements.txt if missing
+- Downloads database if not found
+- Creates virtual environment as needed
+- Provides clear next steps on failures
+
+#### Cross-Platform Compatibility
+- Works on macOS, Linux, and Windows (with make installed)
+- Uses standard Unix commands
+- Handles path differences automatically
+
+### Common Workflows
+
+#### First Time Setup
+```bash
+git clone <repo>
+cd testing_blade
+make setup
+# Edit .env with your API key
+make run
+```
+
+#### Daily Development
+```bash
+make run              # Start the agent
+# ... work with the agent ...
+make clean            # Clean up when done
+```
+
+#### Adding New Dependencies
+```bash
+source venv/bin/activate  # Activate venv
+pip install new-package   # Install package
+make freeze              # Update requirements.txt
+git add requirements.txt  # Commit changes
+```
+
+#### Troubleshooting
+```bash
+make test             # Test database connection
+make check-env        # Verify environment
+make db-info          # Check database status
+make clean-all setup  # Nuclear option: reset everything
+```
+
+#### Complex Operations
+```bash
+make run-high-limit   # For batch operations that need more steps
+make debug           # For investigating issues
+```
+
+### Tips and Best Practices
+
+1. **Always run `make setup` first** - It handles all dependencies
+2. **Use `make help`** - Shows all available commands with descriptions  
+3. **Check `make test`** - Verifies your setup is working
+4. **Use `make clean`** - Regularly clean generated files
+5. **Try `make run-high-limit`** - For complex batch operations
+6. **Use `make debug`** - When you need to investigate issues
+7. **Run `make freeze`** - After installing new packages
+8. **Use `make db-reset`** - To start with a fresh database
+
 ## License
 
 MIT License - see LICENSE file for details.
