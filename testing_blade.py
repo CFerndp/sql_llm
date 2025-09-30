@@ -10,16 +10,40 @@ import os
 # Load environment variables from .env file
 load_dotenv()
 
-db = SQLDatabase.from_uri("sqlite:///Chinook.db")
+# Database configuration from environment variables
+DATABASE_URI = os.environ.get("DATABASE_URI", "sqlite:///Chinook.db")
+DATABASE_TYPE = os.environ.get("DATABASE_TYPE", "SQLite")
 
+# LLM configuration from environment variables
+LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini")
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "openai")
+LLM_API_KEY = os.environ.get("OPENAI_API_KEY")
 
-# Check if OpenAI API key is loaded from environment
-if not os.environ.get("OPENAI_API_KEY"):
+# Validation
+if not LLM_API_KEY:
     raise ValueError(
         "OPENAI_API_KEY not found in environment variables. Please check your .env file."
     )
 
-llm = init_chat_model("gpt-4o-mini", model_provider="openai")
+# Initialize database connection
+try:
+    db = SQLDatabase.from_uri(DATABASE_URI)
+    print(f"✅ Connected to {DATABASE_TYPE} database: {DATABASE_URI}")
+except Exception as e:
+    raise ValueError(f"Failed to connect to database: {e}")
+
+# Initialize LLM
+try:
+    llm = init_chat_model(LLM_MODEL, model_provider=LLM_PROVIDER)
+    print(f"✅ Initialized {LLM_PROVIDER} LLM: {LLM_MODEL}")
+except Exception as e:
+    raise ValueError(f"Failed to initialize LLM: {e}")
+
+# Configuration from environment variables
+DEBUG_MODE = os.environ.get("DEBUG_MODE", "false").lower() == "true"
+BATCH_MODE = os.environ.get("BATCH_MODE", "true").lower() == "true"
+RECURSION_LIMIT = int(os.environ.get("RECURSION_LIMIT", "50"))
+TOP_K_RESULTS = int(os.environ.get("TOP_K_RESULTS", "5"))
 
 # Agent
 toolkit = SQLDatabaseToolkit(db=db, llm=llm)
@@ -79,8 +103,8 @@ When user requests modifications, respond with:
 
 Remember: Accuracy and data integrity are paramount. When in doubt, examine the schema and test with simple queries first.
 """.format(
-    dialect="SQLite",
-    top_k=5,
+    dialect=DATABASE_TYPE,
+    top_k=TOP_K_RESULTS,
 )
 
 agent_executor = create_react_agent(
@@ -88,12 +112,6 @@ agent_executor = create_react_agent(
     tools,
     prompt=system_message,
 )
-
-# Debug mode - set to True to see all SQL queries
-DEBUG_MODE = False
-
-# Batch execution mode
-BATCH_MODE = True
 
 
 def requires_modifications(user_input):
@@ -144,7 +162,7 @@ def execute_with_batch_safety(conversation_history):
     for step in agent_executor.stream(
         {"messages": conversation_history.copy()},
         stream_mode="values",
-        recursion_limit=50,
+        recursion_limit=RECURSION_LIMIT,
     ):
         if step.get("messages"):
             last_message = step["messages"][-1]
@@ -186,10 +204,13 @@ def interactive_cli():
     print("  - 'clear': Clear conversation history")
     print("  - 'debug': Toggle debug mode (show SQL queries)")
     print("  - 'batch': Toggle batch execution mode")
+    print("  - 'config': Show current configuration")
     print("  - 'help': Show this help")
     print("=" * 50)
     print(f"🔍 Debug mode: {'ON' if DEBUG_MODE else 'OFF'}")
     print(f"📦 Batch mode: {'ON' if BATCH_MODE else 'OFF'}")
+    print(f"🎯 Database: {DATABASE_TYPE}")
+    print(f"🧠 LLM: {LLM_PROVIDER}/{LLM_MODEL}")
 
     # Conversation history
     conversation_history = []
@@ -214,6 +235,16 @@ def interactive_cli():
             elif user_input.lower() == "batch":
                 BATCH_MODE = not BATCH_MODE
                 print(f"\n📦 Batch mode: {'ON' if BATCH_MODE else 'OFF'}")
+                continue
+            elif user_input.lower() == "config":
+                print("\n⚙️  Current Configuration:")
+                print(f"   🎯 Database: {DATABASE_TYPE}")
+                print(f"   🔗 Database URI: {DATABASE_URI}")
+                print(f"   🧠 LLM: {LLM_PROVIDER}/{LLM_MODEL}")
+                print(f"   🔍 Debug mode: {'ON' if DEBUG_MODE else 'OFF'}")
+                print(f"   📦 Batch mode: {'ON' if BATCH_MODE else 'OFF'}")
+                print(f"   🔄 Recursion limit: {RECURSION_LIMIT}")
+                print(f"   📊 Top K results: {TOP_K_RESULTS}")
                 continue
             elif user_input.lower() == "help":
                 print("\n📖 Help:")
